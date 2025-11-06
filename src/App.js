@@ -8,6 +8,8 @@ import ListaPersonajes from './components/ListaPersonajes';
 import CrearPersonaje from './components/CrearPersonaje';
 import ActualizarPersonaje from './components/ActualizarPersonaje';
 import EliminarPersonaje from './components/EliminarPersonaje';
+import UploadDocument from './components/UploadDocument';
+import RagQuery from './components/RagQuery';
 
 function App() {
   return (
@@ -20,6 +22,8 @@ function App() {
           <Route path="/crearpersonaje" element={<PrivateRoute><CrearPersonaje /></PrivateRoute>} />
           <Route path="/actualizarpersonaje" element={<PrivateRoute><ActualizarPersonaje /></PrivateRoute>} />
           <Route path="/eliminarpersonaje" element={<PrivateRoute><EliminarPersonaje /></PrivateRoute>} />
+          <Route path="/upload-document" element={<PrivateRoute><UploadDocument /></PrivateRoute>} />
+            <Route path="/rag-query" element={<PrivateRoute><RagQuery /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
       </AuthProvider>

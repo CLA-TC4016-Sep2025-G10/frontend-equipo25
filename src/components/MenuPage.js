@@ -20,6 +20,8 @@ function MenuPage() {
         <li><a href="/crearpersonaje">Crear personaje</a></li>
         <li><a href="/actualizarpersonaje">Actualizar personaje</a></li>
         <li><a href="/eliminarpersonaje">Eliminar personaje</a></li>
+        <li><a href="/upload-document">Upload Document</a></li>
+          <li><a href="/rag-query">RAG Query</a></li>
       </ul>
       <button onClick={handleLogout}>Logout</button>
     </div>
