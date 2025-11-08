@@ -10,13 +10,20 @@ import ActualizarPersonaje from './components/ActualizarPersonaje';
 import EliminarPersonaje from './components/EliminarPersonaje';
 import UploadDocument from './components/UploadDocument';
 import RagQuery from './components/RagQuery';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import LandingPage from './components/LandingPage';
+import RegisterPage from './components/RegisterPage';
 
 function App() {
   return (
     <Router>
       <AuthProvider>
+        <Header />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/menu" element={<PrivateRoute><MenuPage /></PrivateRoute>} />
           <Route path="/listapersonajes" element={<PrivateRoute><ListaPersonajes /></PrivateRoute>} />
           <Route path="/crearpersonaje" element={<PrivateRoute><CrearPersonaje /></PrivateRoute>} />
@@ -26,6 +33,7 @@ function App() {
             <Route path="/rag-query" element={<PrivateRoute><RagQuery /></PrivateRoute>} />
           <Route path="/" element={<Navigate to="/login" />} />
         </Routes>
+        <Footer />
       </AuthProvider>
     </Router>
   );

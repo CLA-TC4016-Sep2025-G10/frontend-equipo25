@@ -1,5 +1,5 @@
 import React, { useState, useContext } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 
 function LoginPage() {
@@ -31,42 +31,58 @@ function LoginPage() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
-        <h2>RAG Platform - Login</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label htmlFor="email">Email:</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="ejemplo@dominio.com"
-              required
-            />
+    <div className="auth-container">
+      <div className="auth-card">
+        <aside className="auth-left">
+          <Link to="/" className="brand-title">
+            Secure<span className="brand-accent">RAG</span>
+          </Link>
+          <p className="brand-desc">Platform for querying and managing characters and documents. Upload, index and query your documents using RAG-powered semantic search.</p>
+          <ul className="features">
+            <li>Assisted queries</li>
+            <li>Character management</li>
+            <li>Document upload and handling</li>
+          </ul>
+        </aside>
+
+        <main className="auth-right">
+          <h2 className="auth-heading">Sign in</h2>
+          {error && <div className="error-message">{error}</div>}
+          <form className="auth-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="email">Email</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="name@example.com"
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                required
+                minLength={6}
+              />
+            </div>
+
+            <button className="login-button" type="submit" disabled={isLoading}>
+              {isLoading ? 'Signing in...' : 'Sign in'}
+            </button>
+          </form>
+
+          <div className="auth-extra">
+            <p>Don't have an account? <Link to="/register" className="register-button">Sign up</Link></p>
           </div>
-          <div className="form-group">
-            <label htmlFor="password">Contraseña:</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Ingrese su contraseña"
-              required
-              minLength={6}
-            />
-          </div>
-          <button 
-            type="submit" 
-            className="login-button"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Iniciando sesión...' : 'Iniciar sesión'}
-          </button>
-        </form>
+        </main>
       </div>
     </div>
   );

@@ -1,0 +1,51 @@
+import React, { useContext } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { AuthContext } from '../contexts/AuthContext';
+
+const Header = () => {
+  const { user, logout } = useContext(AuthContext);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login');
+  };
+
+  return (
+    <header className="site-header">
+      <div className="brand">
+        <Link to="/">Secure<span className="brand-accent">RAG</span></Link>
+      </div>
+
+      <nav className="site-nav" aria-label="Main navigation">
+        <ul className="nav-links">
+          {user ? (
+            <>
+              <li><Link className="nav-link" to="/menu">Menu</Link></li>
+              <li><Link className="nav-link" to="/listapersonajes">Characters</Link></li>
+              <li><Link className="nav-link" to="/crearpersonaje">Create</Link></li>
+              <li><Link className="nav-link" to="/upload-document">Upload</Link></li>
+              <li><Link className="nav-link" to="/rag-query">RAG</Link></li>
+            </>
+          ) : (
+            <>
+              <li><Link className="nav-link" to="/login">Sign in</Link></li>
+              <li><Link className="nav-link register-button" to="/register">Register</Link></li>
+            </>
+          )}
+        </ul>
+      </nav>
+
+      <div className="user-area">
+        {user ? (
+          <>
+            <span className="user-info">Hello, {user.name || user.email}</span>
+            <button className="logout-button" onClick={handleLogout}>Sign out</button>
+          </>
+        ) : null}
+      </div>
+    </header>
+  );
+};
+
+export default Header;
