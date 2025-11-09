@@ -25,10 +25,7 @@ const Header = () => {
         <ul className="nav-links">
           {user ? (
             <>
-              <li><Link className="nav-link" to="/menu">Menu</Link></li>
-              <li><Link className="nav-link" to="/upload-document">Upload</Link></li>
-              <li><Link className="nav-link" to="/rag-query">RAG</Link></li>
-              <li><Link className="nav-link" to="/profile">Profile</Link></li>
+              {/* Authenticated header no longer mirrors sidebar links */}
             </>
           ) : !onProtectedPage ? (
             <>
