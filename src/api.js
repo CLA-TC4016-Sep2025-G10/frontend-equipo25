@@ -1,4 +1,6 @@
-const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.equipo25.edu/rag';
+const ragBaseUrl = process.env.REACT_APP_API_BASE_URL || 'https://api.equipo25.edu/rag';
+const authBaseUrl = process.env.REACT_APP_AUTH_BASE_URL || ragBaseUrl;
+const registerBaseUrl = process.env.REACT_APP_REGISTER_BASE_URL || authBaseUrl;
 
 const buildError = async (response) => {
   let message = 'Error en la solicitud';
@@ -13,7 +15,7 @@ const buildError = async (response) => {
   return error;
 };
 
-const request = async (path, { method = 'GET', token, body, headers = {}, skipJson = false } = {}) => {
+const request = async (baseUrl, path, { method = 'GET', token, body, headers = {}, skipJson = false } = {}) => {
   const finalHeaders = { ...headers };
   let payload = body;
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
@@ -29,7 +31,7 @@ const request = async (path, { method = 'GET', token, body, headers = {}, skipJs
     finalHeaders.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${apiBaseUrl}${path}`, {
+  const response = await fetch(`${baseUrl}${path}`, {
     method,
     headers: finalHeaders,
     body: payload
@@ -48,29 +50,29 @@ const request = async (path, { method = 'GET', token, body, headers = {}, skipJs
 
 // Auth endpoints
 export const loginRequest = (credentials) =>
-  request('/auth/login', { method: 'POST', body: credentials });
+  request(authBaseUrl, '/login', { method: 'POST', body: credentials });
 
 export const fetchCurrentUser = (token) =>
-  request('/users/me', { token });
+  request(ragBaseUrl, '/users/me', { token });
 
 export const logoutRequest = (token) =>
-  request('/auth/logout', { method: 'POST', token, skipJson: true });
+  request(ragBaseUrl, '/auth/logout', { method: 'POST', token, skipJson: true });
 
 export const registerUser = (payload) =>
-  request('/users', { method: 'POST', body: payload });
+  request(registerBaseUrl, '/register', { method: 'POST', body: payload });
 
 // RAG endpoints
 export const listDocuments = (token) =>
-  request('/rag/documents', { token });
+  request(ragBaseUrl, '/rag/documents', { token });
 
 export const uploadDocumentRequest = (formData, token) =>
-  request('/rag/documents', { method: 'POST', body: formData, token });
+  request(ragBaseUrl, '/rag/documents', { method: 'POST', body: formData, token });
 
 export const queryRag = (payload, token) =>
-  request('/rag/query', { method: 'POST', body: payload, token });
+  request(ragBaseUrl, '/rag/query', { method: 'POST', body: payload, token });
 
 export const streamRagQuery = (payload, token) =>
-  fetch(`${apiBaseUrl}/rag/query/stream`, {
+  fetch(`${ragBaseUrl}/rag/query/stream`, {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${token}`,
@@ -81,18 +83,18 @@ export const streamRagQuery = (payload, token) =>
 
 // Legacy personajes helpers preserved for compatibility
 export const getAllPersonajes = () =>
-  request('/personajes');
+  request(ragBaseUrl, '/personajes');
 
 export const getPersonajeById = (id) =>
-  request(`/personajes/${id}`);
+  request(ragBaseUrl, `/personajes/${id}`);
 
 export const createPersonaje = (personaje) =>
-  request('/personajes', { method: 'POST', body: personaje });
+  request(ragBaseUrl, '/personajes', { method: 'POST', body: personaje });
 
 export const updatePersonaje = (id, personaje) =>
-  request(`/personajes/${id}`, { method: 'PUT', body: personaje });
+  request(ragBaseUrl, `/personajes/${id}`, { method: 'PUT', body: personaje });
 
 export const deletePersonaje = (id) =>
-  request(`/personajes/${id}`, { method: 'DELETE' });
+  request(ragBaseUrl, `/personajes/${id}`, { method: 'DELETE' });
 
-export { apiBaseUrl, request };
+export { ragBaseUrl as apiBaseUrl, request };

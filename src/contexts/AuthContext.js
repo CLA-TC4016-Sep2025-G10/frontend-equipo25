@@ -1,6 +1,6 @@
 import React, { createContext, useState, useCallback } from 'react';
 import Cookies from 'js-cookie';
-import { loginRequest, fetchCurrentUser, logoutRequest } from '../api';
+import { loginRequest } from '../api';
 
 export const AuthContext = createContext();
 
@@ -10,22 +10,18 @@ export const AuthProvider = ({ children }) => {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const [token, setToken] = useState(() => Cookies.get('token') || null);
+  const [token, setToken] = useState(null);
 
   const login = useCallback(async (email, password) => {
     try {
       const data = await loginRequest({ email, password });
+      const userData = data.user || {
+        email,
+        name: data.nombre || data.mensaje || 'User'
+      };
 
-      setToken(data.accessToken);
-      Cookies.set('token', data.accessToken, {
-        expires: data.expiresIn / (24 * 60 * 60)
-      });
-
-      const userData = await fetchCurrentUser(data.accessToken);
       setUser(userData);
-      Cookies.set('user', JSON.stringify(userData), {
-        expires: data.expiresIn / (24 * 60 * 60)
-      });
+      Cookies.set('user', JSON.stringify(userData));
 
       return { success: true };
     } catch (error) {
@@ -38,19 +34,10 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    try {
-      if (token) {
-        await logoutRequest(token);
-      }
-    } catch (error) {
-      console.error('Error during logout:', error);
-    } finally {
-      setUser(null);
-      setToken(null);
-      Cookies.remove('user');
-      Cookies.remove('token');
-    }
-  }, [token]);
+    setUser(null);
+    setToken(null);
+    Cookies.remove('user');
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, token, login, logout }}>
