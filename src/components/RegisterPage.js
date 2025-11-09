@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { registerUser } from '../api';
 
 const RegisterPage = () => {
   const [form, setForm] = useState({ name: '', email: '', password: '', confirm: '' });
@@ -28,22 +29,10 @@ const RegisterPage = () => {
 
     setIsLoading(true);
     try {
-      const apiBase = process.env.REACT_APP_API_BASE_URL || 'https://api.equipo25.edu/rag';
-      const res = await fetch(`${apiBase}/users`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: form.name, email: form.email, password: form.password }),
-      });
-
-      if (res.status === 201) {
-        // created
-        navigate('/login');
-      } else {
-        const data = await res.json().catch(() => ({}));
-        setError(data.message || data.error || 'Registration failed');
-      }
+      await registerUser({ name: form.name, email: form.email, password: form.password });
+      navigate('/login');
     } catch (err) {
-      setError('Network error while registering');
+      setError(err.message || 'Registration failed');
       console.error(err);
     } finally {
       setIsLoading(false);

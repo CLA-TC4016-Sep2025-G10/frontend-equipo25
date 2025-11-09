@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import MenuSidebar from './MenuPage';
+import { listDocuments, queryRag as queryRagRequest, streamRagQuery } from '../api';
 
 const RagQuery = () => {
     const [question, setQuestion] = useState('');
@@ -22,25 +23,18 @@ const RagQuery = () => {
     }, [messages]);
 
     useEffect(() => {
-        // Fetch available documents and their tags
         const fetchDocuments = async () => {
             try {
-                const response = await fetch('https://api.equipo25.edu/rag/documents', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                const data = await listDocuments(token);
+                const items = data.items || [];
+                setAvailableDocs(items);
+                const tags = new Set();
+                items.forEach(doc => {
+                    if (doc.tags) {
+                        doc.tags.forEach(tag => tags.add(tag));
                     }
                 });
-                if (response.ok) {
-                    const data = await response.json();
-                    setAvailableDocs(data.items);
-                    const tags = new Set();
-                    data.items.forEach(doc => {
-                        if (doc.tags) {
-                            doc.tags.forEach(tag => tags.add(tag));
-                        }
-                    });
-                    setAvailableTags(tags);
-                }
+                setAvailableTags(tags);
             } catch (error) {
                 console.error('Error fetching documents:', error);
             }
@@ -100,14 +94,7 @@ const RagQuery = () => {
                 // add placeholder assistant message
                 setMessages(prev => [...prev, { sender: 'assistant', text: '' }]);
 
-                const response = await fetch('https://api.equipo25.edu/rag/query/stream', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(queryData)
-                });
+                const response = await streamRagQuery(queryData, token);
 
                 if (!response.ok) throw new Error('Query error');
 
@@ -127,18 +114,7 @@ const RagQuery = () => {
                     });
                 }
             } else {
-                const response = await fetch('https://api.equipo25.edu/rag/query', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(queryData)
-                });
-
-                if (!response.ok) throw new Error('Query error');
-
-                const data = await response.json();
+                const data = await queryRagRequest(queryData, token);
                 setMessages(prev => [...prev, { sender: 'assistant', text: data.answer || '' }]);
                 setSources(data.sources || []);
             }

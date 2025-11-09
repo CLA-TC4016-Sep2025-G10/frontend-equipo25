@@ -1,6 +1,7 @@
 import React, { useState, useContext, useCallback } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import MenuSidebar from './MenuPage';
+import { uploadDocumentRequest } from '../api';
 
 const initialState = {
   file: null,
@@ -49,15 +50,7 @@ const UploadDocument = () => {
           .forEach((tag) => formData.append('tags[]', tag));
       }
 
-      const response = await fetch('https://api.equipo25.edu/rag/documents', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${token}` },
-        body: formData
-      });
-
-      if (!response.ok) throw new Error(response.statusText);
-
-      await response.json();
+      await uploadDocumentRequest(formData, token);
       setMessage('Document uploaded successfully!');
       setFormState(initialState);
     } catch (error) {
