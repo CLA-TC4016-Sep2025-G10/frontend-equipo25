@@ -1,10 +1,14 @@
 import React, { useContext } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../contexts/AuthContext';
 
 const Header = () => {
   const { user, logout } = useContext(AuthContext);
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const protectedRoutes = ['/upload-document', '/rag-query', '/profile'];
+  const onProtectedPage = protectedRoutes.some((path) => location.pathname.startsWith(path));
 
   const handleLogout = async () => {
     await logout();
@@ -22,24 +26,23 @@ const Header = () => {
           {user ? (
             <>
               <li><Link className="nav-link" to="/menu">Menu</Link></li>
-              <li><Link className="nav-link" to="/listapersonajes">Characters</Link></li>
-              <li><Link className="nav-link" to="/crearpersonaje">Create</Link></li>
               <li><Link className="nav-link" to="/upload-document">Upload</Link></li>
               <li><Link className="nav-link" to="/rag-query">RAG</Link></li>
+              <li><Link className="nav-link" to="/profile">Profile</Link></li>
             </>
-          ) : (
+          ) : !onProtectedPage ? (
             <>
               <li><Link className="nav-link" to="/login">Sign in</Link></li>
               <li><Link className="nav-link register-button" to="/register">Register</Link></li>
             </>
-          )}
+          ) : null}
         </ul>
       </nav>
 
       <div className="user-area">
-        {user ? (
+        {(user || onProtectedPage) ? (
           <>
-            <span className="user-info">Hello, {user.name || user.email}</span>
+            {user && <span className="user-info">Hello, {user.name || user.email}</span>}
             <button className="logout-button" onClick={handleLogout}>Sign out</button>
           </>
         ) : null}

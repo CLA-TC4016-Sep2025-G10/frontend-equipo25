@@ -18,7 +18,7 @@ function LoginPage() {
     try {
       const result = await login(email, password);
       if (result.success) {
-        navigate('/menu');
+        navigate('/rag-query');
       } else {
         setError(result.error);
       }

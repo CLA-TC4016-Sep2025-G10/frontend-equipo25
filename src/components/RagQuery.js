@@ -1,9 +1,10 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
+import MenuSidebar from './MenuPage';
 
 const RagQuery = () => {
     const [question, setQuestion] = useState('');
-    const [answer, setAnswer] = useState('');
+    const [messages, setMessages] = useState([]);
     const [sources, setSources] = useState([]);
     const [isStreaming, setIsStreaming] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
@@ -12,9 +13,16 @@ const RagQuery = () => {
     const [availableDocs, setAvailableDocs] = useState([]);
     const [availableTags, setAvailableTags] = useState(new Set());
     const { token } = useContext(AuthContext);
+    const messagesRef = useRef(null);
 
-    // Fetch available documents and their tags
     useEffect(() => {
+        if (messagesRef.current) {
+            messagesRef.current.scrollTop = messagesRef.current.scrollHeight;
+        }
+    }, [messages]);
+
+    useEffect(() => {
+        // Fetch available documents and their tags
         const fetchDocuments = async () => {
             try {
                 const response = await fetch('https://api.equipo25.edu/rag/documents', {
@@ -25,8 +33,6 @@ const RagQuery = () => {
                 if (response.ok) {
                     const data = await response.json();
                     setAvailableDocs(data.items);
-                    
-                    // Extract unique tags from all documents
                     const tags = new Set();
                     data.items.forEach(doc => {
                         if (doc.tags) {
@@ -39,7 +45,6 @@ const RagQuery = () => {
                 console.error('Error fetching documents:', error);
             }
         };
-
         if (token) {
             fetchDocuments();
         }
@@ -65,19 +70,23 @@ const RagQuery = () => {
 
     const handleStreamingToggle = () => {
         setIsStreaming(!isStreaming);
-        setAnswer('');
         setSources([]);
     };
 
     const handleSubmit = async (e) => {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
+        if (!question.trim()) return;
         setError('');
         setIsLoading(true);
-        setAnswer('');
         setSources([]);
 
+        // push user message
+        setMessages(prev => [...prev, { sender: 'user', text: question }]);
+        const userQuestion = question;
+        setQuestion('');
+
         const queryData = {
-            question,
+            question: userQuestion,
             topK: 5,
             filters: {
                 tags: filters.tags.length > 0 ? filters.tags : undefined,
@@ -88,6 +97,9 @@ const RagQuery = () => {
 
         try {
             if (isStreaming) {
+                // add placeholder assistant message
+                setMessages(prev => [...prev, { sender: 'assistant', text: '' }]);
+
                 const response = await fetch('https://api.equipo25.edu/rag/query/stream', {
                     method: 'POST',
                     headers: {
@@ -97,17 +109,22 @@ const RagQuery = () => {
                     body: JSON.stringify(queryData)
                 });
 
-                if (!response.ok) throw new Error('Error en la consulta');
+                if (!response.ok) throw new Error('Query error');
 
                 const reader = response.body.getReader();
                 const decoder = new TextDecoder();
-                
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
-                    
                     const chunk = decoder.decode(value);
-                    setAnswer(prev => prev + chunk);
+                    setMessages(prev => {
+                        const copy = [...prev];
+                        const last = copy.length - 1;
+                        if (last >= 0 && copy[last].sender === 'assistant') {
+                            copy[last] = { ...copy[last], text: (copy[last].text || '') + chunk };
+                        }
+                        return copy;
+                    });
                 }
             } else {
                 const response = await fetch('https://api.equipo25.edu/rag/query', {
@@ -119,116 +136,147 @@ const RagQuery = () => {
                     body: JSON.stringify(queryData)
                 });
 
-                if (!response.ok) throw new Error('Error en la consulta');
+                if (!response.ok) throw new Error('Query error');
 
                 const data = await response.json();
-                setAnswer(data.answer);
+                setMessages(prev => [...prev, { sender: 'assistant', text: data.answer || '' }]);
                 setSources(data.sources || []);
             }
-        } catch (error) {
-            setError('Error al procesar la consulta: ' + error.message);
+        } catch (err) {
+            setError('Error processing query: ' + err.message);
+            setMessages(prev => [...prev, { sender: 'assistant', text: 'Error: ' + err.message }]);
         } finally {
             setIsLoading(false);
+            setTimeout(() => { if (messagesRef.current) messagesRef.current.scrollTop = messagesRef.current.scrollHeight; }, 50);
         }
     };
 
     return (
-        <div className="rag-query">
-            <h2>Consulta RAG</h2>
-            
-            <form onSubmit={handleSubmit} className="query-form">
-                <div className="query-input">
-                    <label htmlFor="question">Pregunta:</label>
-                    <textarea
-                        id="question"
-                        value={question}
-                        onChange={(e) => setQuestion(e.target.value)}
-                        placeholder="Escriba su pregunta aquí..."
-                        required
-                    />
-                </div>
-
-                <div className="filters-section">
-                    <h3>Filtros</h3>
-                    
-                    <div className="tags-filter">
-                        <h4>Tags:</h4>
-                        <div className="tags-list">
-                            {Array.from(availableTags).map(tag => (
-                                <label key={tag} className="tag-checkbox">
-                                    <input
-                                        type="checkbox"
-                                        checked={filters.tags.includes(tag)}
-                                        onChange={() => handleTagToggle(tag)}
-                                    />
-                                    {tag}
-                                </label>
-                            ))}
+        <div className="page-with-sidebar fixed-page">
+            <MenuSidebar />
+            <section className="rag-experience main-content">
+                <header className="rag-hero">
+                    <div>
+                        <p className="rag-eyebrow">Conversational Search</p>
+                        <h1>SecureRAG Assistant</h1>
+                        <p className="rag-subtitle">
+                            Ask natural questions and the assistant will respond using your uploaded knowledge base,
+                            surfacing sources for every answer.
+                        </p>
+                    </div>
+                    <div className="rag-meta">
+                        <div>
+                            <span>Streaming</span>
+                            <label className="switch">
+                                <input type="checkbox" checked={isStreaming} onChange={handleStreamingToggle} />
+                                <span className="slider" />
+                            </label>
+                        </div>
+                        <div>
+                            <span>Filters</span>
+                            <strong>{filters.tags.length + filters.docIds.length}</strong>
                         </div>
                     </div>
+                </header>
 
-                    <div className="docs-filter">
-                        <h4>Documentos:</h4>
-                        <div className="docs-list">
-                            {availableDocs.map(doc => (
-                                <label key={doc.id} className="doc-checkbox">
-                                    <input
-                                        type="checkbox"
-                                        checked={filters.docIds.includes(doc.id)}
-                                        onChange={() => handleDocToggle(doc.id)}
-                                    />
-                                    {doc.title || doc.filename}
-                                </label>
-                            ))}
+                <div className="rag-grid">
+                    <div className="rag-chat-panel">
+                        <div className="rag-messages" ref={messagesRef}>
+                            {messages.length === 0 && !isLoading ? (
+                                <div className="rag-empty">
+                                    <h3>Start the conversation</h3>
+                                    <p>Ask about procedures, policies, or any document you have uploaded.</p>
+                                </div>
+                            ) : (
+                                messages.map((m, i) => (
+                                    <div key={i} className={`chat-message ${m.sender}`}>
+                                        <div className="avatar">{m.sender === 'user' ? 'You' : 'AI'}</div>
+                                        <div className="bubble">{m.text}</div>
+                                    </div>
+                                ))
+                            )}
+                            {isLoading && <div className="chat-message assistant"><div className="avatar">AI</div><div className="bubble">...</div></div>}
                         </div>
+
+                        {error && <div className="callout error">{error}</div>}
+
+                        {sources && sources.length > 0 && (
+                            <div className="rag-sources">
+                                <h3>Sources</h3>
+                                <ul>
+                                    {sources.map((source, idx) => (
+                                        <li key={idx}>
+                                            <strong>{source.title}</strong>
+                                            <p>{source.snippet}</p>
+                                            {typeof source.score === 'number' && (
+                                                <small>Relevance: {Math.round(source.score * 100)}%</small>
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} className="rag-input">
+                            <textarea
+                                value={question}
+                                onChange={(e) => setQuestion(e.target.value)}
+                                placeholder="Ask anything about your documents..."
+                                rows={2}
+                            />
+                            <div className="input-actions">
+                                <span className="hint">Shift + Enter for newline</span>
+                                <button type="submit" disabled={isLoading}>{isLoading ? 'Sending...' : 'Send'}</button>
+                            </div>
+                        </form>
                     </div>
-                </div>
 
-                <div className="query-options">
-                    <label className="streaming-toggle">
-                        <input
-                            type="checkbox"
-                            checked={isStreaming}
-                            onChange={handleStreamingToggle}
-                        />
-                        Respuesta en streaming
-                    </label>
-                </div>
-
-                <button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Procesando...' : 'Enviar consulta'}
-                </button>
-            </form>
-
-            {error && <div className="error-message">{error}</div>}
-
-            {answer && (
-                <div className="response-section">
-                    <h3>Respuesta:</h3>
-                    <div className="answer">
-                        {answer.split('\n').map((line, i) => (
-                            <p key={i}>{line}</p>
-                        ))}
-                    </div>
-                    
-                    {!isStreaming && sources.length > 0 && (
-                        <div className="sources">
-                            <h3>Fuentes:</h3>
-                            <ul>
-                                {sources.map((source, index) => (
-                                    <li key={index}>
-                                        <strong>{source.title}</strong>
-                                        <p>{source.snippet}</p>
-                                        <small>Relevancia: {Math.round(source.score * 100)}%</small>
-                                    </li>
+                    <aside className="rag-aside">
+                        <div className="rag-card">
+                            <h3>Tag filters</h3>
+                            <div className="chip-grid">
+                                {Array.from(availableTags).map(tag => (
+                                    <label key={tag} className={`chip ${filters.tags.includes(tag) ? 'selected' : ''}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={filters.tags.includes(tag)}
+                                            onChange={() => handleTagToggle(tag)}
+                                        />
+                                        {tag}
+                                    </label>
                                 ))}
-                            </ul>
+                                {availableTags.size === 0 && <p className="muted small">No tags detected yet.</p>}
+                            </div>
                         </div>
-                    )}
+
+                        <div className="rag-card">
+                            <h3>Documents</h3>
+                            <div className="docs-scroll">
+                                {availableDocs.map(doc => (
+                                    <label key={doc.id} className={`doc-item ${filters.docIds.includes(doc.id) ? 'active' : ''}`}>
+                                        <input
+                                            type="checkbox"
+                                            checked={filters.docIds.includes(doc.id)}
+                                            onChange={() => handleDocToggle(doc.id)}
+                                        />
+                                        <div>
+                                            <strong>{doc.title || doc.filename}</strong>
+                                            {doc.tags && (
+                                                <p>{doc.tags.join(', ')}</p>
+                                            )}
+                                        </div>
+                                    </label>
+                                ))}
+                                {availableDocs.length === 0 && <p className="muted small">No documents available.</p>}
+                            </div>
+                        </div>
+                    </aside>
                 </div>
-            )}
+            </section>
         </div>
     );
-};
+}
 
 export default RagQuery;
+
+
