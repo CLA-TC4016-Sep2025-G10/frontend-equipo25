@@ -12,6 +12,8 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import LandingPage from './components/LandingPage';
 import RegisterPage from './components/RegisterPage';
+import DocumentsPage from './components/DocumentsPage';
+import UsersPage from './components/UsersPage';
 
 function App() {
   return (
@@ -29,6 +31,8 @@ function App() {
               {/* Removed unused character management routes */}
               <Route path="/upload-document" element={<PrivateRoute><UploadDocument /></PrivateRoute>} />
               <Route path="/rag-query" element={<PrivateRoute><RagQuery /></PrivateRoute>} />
+              <Route path="/documents" element={<PrivateRoute><DocumentsPage /></PrivateRoute>} />
+              <Route path="/users" element={<PrivateRoute><UsersPage /></PrivateRoute>} />
               <Route path="/" element={<Navigate to="/login" />} />
             </Routes>
           </main>

@@ -1,7 +1,6 @@
 import React, { useState, useContext, useCallback } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import MenuSidebar from './MenuPage';
-import { uploadDocumentRequest } from '../api';
 
 const initialState = {
   file: null,
@@ -38,19 +37,21 @@ const UploadDocument = () => {
 
     try {
       const formData = new FormData();
-      formData.append('file', file);
-
-      if (title.trim()) formData.append('title', title.trim());
+      // Backend expects 'archivo' for the file and 'tags' for tags
+      formData.append('archivo', file);
 
       if (tags.trim()) {
-        tags
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean)
-          .forEach((tag) => formData.append('tags[]', tag));
+        formData.append('tags', tags.trim());
       }
 
-      await uploadDocumentRequest(formData, token);
+      const response = await fetch('http://127.0.0.1:5001/documentos', {
+        method: 'POST',
+        body: formData
+      });
+      if (!response.ok) {
+        const errText = await response.text().catch(() => '');
+        throw new Error(errText || 'Upload failed');
+      }
       setMessage('Document uploaded successfully!');
       setFormState(initialState);
     } catch (error) {

@@ -5,7 +5,9 @@ import { Link, useLocation } from 'react-router-dom';
 const navLinks = [
   { to: '/upload-document', label: 'Upload Document', blurb: 'Send a new knowledge source to SecureRAG.' },
   { to: '/rag-query', label: 'RAG Query', blurb: 'Ask questions against the indexed knowledge base.' },
-  { to: '/profile', label: 'Profile', blurb: 'Review your account and token information.' }
+  { to: '/profile', label: 'Profile', blurb: 'Review your account and token information.' },
+  { to: '/documents', label: 'Documents', blurb: 'Administrate documents' },
+  { to: '/users', label: 'Users', blurb: 'Administrate users' }
 ];
 
 const GradientLabel = ({ children }) => (
