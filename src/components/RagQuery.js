@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { AuthContext } from '../contexts/AuthContext';
 import MenuSidebar from './MenuPage';
-import { listDocuments, queryRag as queryRagRequest, streamRagQuery } from '../api';
+import { listDocuments, queryRag, streamRagQuery } from '../api';
 
 const RagQuery = () => {
     const [question, setQuestion] = useState('');
@@ -114,9 +114,18 @@ const RagQuery = () => {
                     });
                 }
             } else {
-                const data = await queryRagRequest(queryData, token);
+                const data = await queryRag(queryData, token);
                 setMessages(prev => [...prev, { sender: 'assistant', text: data.answer || '' }]);
-                setSources(data.sources || []);
+                
+                // Format sources from backend response
+                if (data.sources && Array.isArray(data.sources)) {
+                    const formattedSources = data.sources.map((source, idx) => ({
+                        title: typeof source === 'string' ? source : (source.title || source.filename || `Document ${idx + 1}`),
+                        snippet: typeof source === 'string' ? '' : (source.snippet || source.content || ''),
+                        score: typeof source === 'string' ? null : (source.score || source.confidence || data.confidence)
+                    }));
+                    setSources(formattedSources);
+                }
             }
         } catch (err) {
             setError('Error processing query: ' + err.message);
